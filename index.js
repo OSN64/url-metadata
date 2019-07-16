@@ -14,7 +14,8 @@ module.exports = function (url, options) {
     ensureSecureImageRequest: options.ensureSecureImageRequest || true,
     sourceMap: options.sourceMap || {},
     decode: options.decode || undefined,
-    encode: options.encode || undefined
+    encode: options.encode || undefined,
+    blacklistContentTypes: options.blacklistContentTypes || 'video\/.*'
   }
 
   const requestOpts = {
@@ -35,6 +36,9 @@ module.exports = function (url, options) {
       return dfd.reject({ Error: 'response code ' + response.statusCode })
     }
     if (response.statusCode && response.statusCode === 200) {
+      if (new RegExp(opts.blacklistContentTypes, 'i')).exec(response.headers['content-type'])) {
+        return dfd.reject({ Error: 'blacklisted content type' })
+      }
       // rewrite url if our request had to follow redirects to resolve the
       // final link destination (for example: links shortened by bit.ly)
       if (response.request.uri.href) url = response.request.uri.href
